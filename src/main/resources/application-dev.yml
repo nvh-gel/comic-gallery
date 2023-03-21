@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://tiny.db.elephantsql.com/osuxsphy
+    username: osuxsphy
+    password: L3IeqP6K96YUOSceJqLGfgnPxOY6IcDT
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true

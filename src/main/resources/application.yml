@@ -1,1 +1,6 @@
-
+spring:
+  profiles:
+    active: ${ENV:prod}
+server:
+  servlet:
+    context-path: /api
