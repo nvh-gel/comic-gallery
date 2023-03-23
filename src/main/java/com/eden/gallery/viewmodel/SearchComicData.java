@@ -6,5 +6,7 @@ import lombok.Data;
 @Data
 public class SearchComicData {
 
+    private ComicVM criteria;
+
     private Paging paging;
 }

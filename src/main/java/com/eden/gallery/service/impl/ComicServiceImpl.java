@@ -1,17 +1,22 @@
 package com.eden.gallery.service.impl;
 
 import com.eden.common.utils.Paging;
+import com.eden.common.utils.ResponseModel;
 import com.eden.gallery.mapper.ComicMapper;
 import com.eden.gallery.model.Comic;
 import com.eden.gallery.repository.ComicRepository;
+import com.eden.gallery.search.ComicSpecificationBuilder;
+import com.eden.gallery.search.SpecificationBuilder;
 import com.eden.gallery.service.ComicService;
 import com.eden.gallery.viewmodel.ComicVM;
 import com.eden.gallery.viewmodel.SearchComicData;
 import jakarta.transaction.Transactional;
 import org.mapstruct.factory.Mappers;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDateTime;
@@ -26,8 +31,7 @@ public class ComicServiceImpl implements ComicService {
     private final ComicMapper mapper = Mappers.getMapper(ComicMapper.class);
 
     /**
-     * @param comicVM
-     * @return
+     * {@inheritDoc}
      */
     @Override
     @Transactional
@@ -42,8 +46,7 @@ public class ComicServiceImpl implements ComicService {
     }
 
     /**
-     * @param comicVM
-     * @return
+     * {@inheritDoc}
      */
     @Override
     public String createOnQueue(ComicVM comicVM) {
@@ -51,7 +54,7 @@ public class ComicServiceImpl implements ComicService {
     }
 
     /**
-     * @return
+     * {@inheritDoc}
      */
     @Override
     public List<ComicVM> findAll() {
@@ -60,8 +63,7 @@ public class ComicServiceImpl implements ComicService {
     }
 
     /**
-     * @param aLong
-     * @return
+     * {@inheritDoc}
      */
     @Override
     public ComicVM findById(Long aLong) {
@@ -70,8 +72,7 @@ public class ComicServiceImpl implements ComicService {
     }
 
     /**
-     * @param comicVM
-     * @return
+     * {@inheritDoc}
      */
     @Override
     public ComicVM update(ComicVM comicVM) {
@@ -79,8 +80,7 @@ public class ComicServiceImpl implements ComicService {
     }
 
     /**
-     * @param comicVM
-     * @return
+     * {@inheritDoc}
      */
     @Override
     public String updateOnQueue(ComicVM comicVM) {
@@ -88,8 +88,7 @@ public class ComicServiceImpl implements ComicService {
     }
 
     /**
-     * @param aLong
-     * @return
+     * {@inheritDoc}
      */
     @Override
     public ComicVM delete(Long aLong) {
@@ -97,8 +96,7 @@ public class ComicServiceImpl implements ComicService {
     }
 
     /**
-     * @param aLong
-     * @return
+     * {@inheritDoc}
      */
     @Override
     public String deleteOnQueue(Long aLong) {
@@ -111,9 +109,34 @@ public class ComicServiceImpl implements ComicService {
     }
 
     @Override
-    public List<ComicVM> searchComic(SearchComicData searchData) {
+    public Page<Comic> searchComic(SearchComicData searchData) {
 
-        Paging paging = null == searchData.getPaging() ? new Paging() : searchData.getPaging();
-        return null;
+        Paging paging = Paging.fromPaging(searchData.getPaging());
+        Pageable pageable = PageRequest.of(paging.getPage() - 1,
+                paging.getPageSize(),
+                Sort.Direction.valueOf(paging.getOrder()),
+                paging.getSortBy());
+        SpecificationBuilder<Comic> specBuilder = new ComicSpecificationBuilder(searchData.getCriteria());
+        return comicRepository.findAll(specBuilder.build(), pageable);
     }
+
+    @Override
+    public ResponseModel toSearchResponse(Page<Comic> searchResult) {
+
+        ResponseModel response = ResponseModel.ok(mapper.toViewModel(searchResult.stream().toList()));
+        Sort.Order order = searchResult.getSort().stream().findFirst().orElse(null);
+        Paging pagingData = new Paging(searchResult.getNumber() + 1,
+                searchResult.getSize(),
+                searchResult.getNumberOfElements(),
+                searchResult.getTotalPages(),
+                null, null);
+        if (order != null) {
+            pagingData.setSortBy(order.getProperty());
+            pagingData.setOrder(order.getDirection().name());
+        }
+        response.setExtra(pagingData);
+        return response;
+    }
+
+
 }

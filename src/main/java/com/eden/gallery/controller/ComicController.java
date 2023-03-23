@@ -43,7 +43,7 @@ public class ComicController {
     @GetMapping("/search")
     ResponseModel searchComic(@RequestBody SearchComicData searchData) {
 
-        return ResponseModel.ok(comicService.searchComic(searchData));
+        return comicService.toSearchResponse(comicService.searchComic(searchData));
     }
 
     @Autowired
