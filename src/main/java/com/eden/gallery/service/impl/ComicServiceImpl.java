@@ -75,8 +75,18 @@ public class ComicServiceImpl implements ComicService {
      * {@inheritDoc}
      */
     @Override
+    @Transactional
     public ComicVM update(ComicVM comicVM) {
-        return null;
+
+        Comic exist = comicRepository.findById(comicVM.getId()).orElse(null);
+        if (exist == null) {
+            return null;
+        }
+        Comic toUpdate = mapper.toModel(comicVM);
+        mapper.mapUpdate(exist, toUpdate);
+        exist.setUpdatedAt(LocalDateTime.now());
+        Comic updated = comicRepository.save(exist);
+        return mapper.toViewModel(updated);
     }
 
     /**
@@ -92,7 +102,15 @@ public class ComicServiceImpl implements ComicService {
      */
     @Override
     public ComicVM delete(Long aLong) {
-        return null;
+
+        Comic exist = comicRepository.findById(aLong).orElse(null);
+        if (exist == null) {
+            return null;
+        }
+        exist.setUpdatedAt(LocalDateTime.now());
+        exist.setDeleted(true);
+        comicRepository.deleteById(aLong);
+        return mapper.toViewModel(exist);
     }
 
     /**
